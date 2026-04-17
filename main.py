@@ -1,32 +1,58 @@
 import os
 import requests
+import telebot
 
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-CHAT_ID = os.getenv('CHAT_ID')
+# Load keys from environment variables
+TOKEN = os.getenv('TELEGRAM_TOKEN')
 NEWS_API_KEY = os.getenv('NEWS_API_KEY')
 
-def test_and_send():
-    # 1. Check if NewsAPI is working
-    print(f"Fetching news...")
-    url = f"https://newsapi.org/v2/top-headlines?category=technology&language=en&apiKey={NEWS_API_KEY}"
-    response = requests.get(url).json()
+bot = telebot.TeleBot(TOKEN)
+
+# Welcome message
+@bot.message_handler(commands=['start', 'help'])
+def send_welcome(message):
+    welcome_text = (
+        "🤖 **Welcome to the Interactive News Bot!**\n\n"
+        "I can find news on any topic for you.\n"
+        "Just type: `/news <topic>`\n"
+        "Example: `/news cryptocurrency` or `/news cricket`"
+    )
+    bot.reply_to(message, welcome_text, parse_mode='Markdown')
+
+# The "Researcher" logic
+@bot.message_handler(commands=['news'])
+def get_custom_news(message):
+    # Get the topic from the user (everything after /news)
+    query = message.text.replace('/news ', '').strip()
     
-    articles = response.get('articles', [])
-    print(f"Found {len(articles)} articles.")
+    if not query or query == "/news":
+        bot.reply_to(message, "Please provide a topic! Example: `/news space`")
+        return
 
-    if not articles:
-        message = "⚠️ System Test: No news found, but connection is working!"
-    else:
-        top_story = articles[0].get('title')
-        message = f"🚀 **Bot Live!**\n\nTop News: {top_story}"
-
-    # 2. Check if Telegram is working
-    print(f"Sending to Chat ID: {CHAT_ID}...")
-    api_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
+    bot.send_message(message.chat.id, f"🔎 Searching for the latest on **{query}**...", parse_mode='Markdown')
     
-    r = requests.post(api_url, data=payload)
-    print(f"Telegram Response: {r.text}")
+    # Query NewsAPI specifically for what the user typed
+    url = f"https://newsapi.org/v2/everything?q={query}&sortBy=publishedAt&pageSize=3&language=en&apiKey={NEWS_API_KEY}"
+    
+    try:
+        response = requests.get(url).json()
+        articles = response.get('articles', [])
 
-if __name__ == "__main__":
-    test_and_send()
+        if not articles:
+            bot.reply_to(message, f"❌ I couldn't find any recent news about '{query}'.")
+            return
+
+        for art in articles:
+            news_message = (
+                f"🌟 **{art['title']}**\n"
+                f"📝 {art['description'][:150]}...\n"
+                f"🔗 [Read More]({art['url']})"
+            )
+            bot.send_message(message.chat.id, news_message, parse_mode='Markdown', disable_web_page_preview=False)
+            
+    except Exception as e:
+        bot.reply_to(message, "⚠️ Something went wrong while fetching the news.")
+
+# This keeps the bot listening 24/7
+print("Bot is starting...")
+bot.infinity_polling()
