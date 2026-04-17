@@ -1,38 +1,32 @@
 import os
 import requests
 
-# Fetching the secrets we saved in GitHub Settings
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 NEWS_API_KEY = os.getenv('NEWS_API_KEY')
 
-def get_tech_news():
-    # Fetching top technology headlines from NewsAPI
+def test_and_send():
+    # 1. Check if NewsAPI is working
+    print(f"Fetching news...")
     url = f"https://newsapi.org/v2/top-headlines?category=technology&language=en&apiKey={NEWS_API_KEY}"
     response = requests.get(url).json()
-    articles = response.get('articles', [])[:5] # Take the top 5
     
-    report = "🚀 **Daily Tech Intelligence** 🚀\n\n"
-    if not articles:
-        return "No news found today."
-        
-    for art in articles:
-        title = art.get('title')
-        url = art.get('url')
-        report += f"🔹 {title}\n🔗 {url}\n\n"
-    return report
+    articles = response.get('articles', [])
+    print(f"Found {len(articles)} articles.")
 
-def send_telegram_msg(message):
-    # Sending the report to your Telegram bot
+    if not articles:
+        message = "⚠️ System Test: No news found, but connection is working!"
+    else:
+        top_story = articles[0].get('title')
+        message = f"🚀 **Bot Live!**\n\nTop News: {top_story}"
+
+    # 2. Check if Telegram is working
+    print(f"Sending to Chat ID: {CHAT_ID}...")
     api_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": message,
-        "parse_mode": "Markdown",
-        "disable_web_page_preview": False
-    }
-    requests.post(api_url, data=payload)
+    payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
+    
+    r = requests.post(api_url, data=payload)
+    print(f"Telegram Response: {r.text}")
 
 if __name__ == "__main__":
-    news_report = get_tech_news()
-    send_telegram_msg(news_report)
+    test_and_send()
