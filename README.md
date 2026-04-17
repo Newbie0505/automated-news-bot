@@ -17,5 +17,7 @@ You can try the bot right now on Telegram: [@YourBotUsername]
 - **Deployment:** Render (Cloud Hosting)
 
 ## 📸 Screenshots
-![Bot Demo](link-to-your-screenshot.png) 
-*(Tip: Upload your Telegram screenshot to your repo and link it here!)*
+![Bot Demo]
+(<img width="746" height="1600" alt="image" src="https://github.com/user-attachments/assets/7cbb9b7c-6c7c-4633-82ba-e4d2fedc300e" />) 
+*(<img width="820" height="1600" alt="image" src="https://github.com/user-attachments/assets/ecee9fac-0e83-47ba-8003-8936f9fa240b" />
+)*
