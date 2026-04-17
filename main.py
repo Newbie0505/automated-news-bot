@@ -1,6 +1,16 @@
 import os
 import requests
 import telebot
+import os
+import requests
+import telebot
+from flask import Flask # Add this line
+
+# This "tricks" Render into thinking we are a website
+app = Flask(__name__)
+@app.route('/')
+def index():
+    return "Bot is running!"
 
 # Load keys from environment variables
 TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -55,4 +65,11 @@ def get_custom_news(message):
 
 # This keeps the bot listening 24/7
 print("Bot is starting...")
-bot.infinity_polling()
+if __name__ == "__main__":
+    # Start the "website" part in the background
+    from threading import Thread
+    Thread(target=lambda: app.run(host='0.0.0.0', port=os.environ.get('PORT', 5000))).start()
+    
+    # Start the bot
+    print("Bot is starting...")
+    bot.infinity_polling()
